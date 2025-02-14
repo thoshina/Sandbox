@@ -124,12 +124,20 @@ func postArticles(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Endpoint Hit: postArticles")
 }
 
+func deleteArticles(w http.ResponseWriter, r *http.Request) {
+	db := GetDBConn()
+
+	db.Delete(articles) //特に指定しないと全削除
+	fmt.Println("Endpoint Hit: deleteArticles")
+}
+
 func handleRequests() {
 	http.HandleFunc("/", homePage)
 	http.HandleFunc("/articles", returnArticles)
 	http.HandleFunc("/fetch", fetchArticles)
 	http.HandleFunc("/write", writeArticles)
 	http.HandleFunc("/postart", postArticles)
+	http.HandleFunc("/delete", deleteArticles)
 	log.Fatal(http.ListenAndServe(":8081", nil))
 }
 

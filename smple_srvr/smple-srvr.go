@@ -127,7 +127,11 @@ func postArticles(w http.ResponseWriter, r *http.Request) {
 func deleteArticles(w http.ResponseWriter, r *http.Request) {
 	db := GetDBConn()
 
+	db.Find(&articles)
+	i := len(articles)
 	db.Delete(articles) //特に指定しないと全削除
+	db.Find(&articles)
+	fmt.Fprintf(w, "Delete %d records.\n", i-len(articles))
 	fmt.Println("Endpoint Hit: deleteArticles")
 }
 

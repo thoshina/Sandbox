@@ -128,10 +128,8 @@ func deleteArticles(w http.ResponseWriter, r *http.Request) {
 	db := GetDBConn()
 
 	db.Find(&articles)
-	i := len(articles)
-	db.Delete(articles) //特に指定しないと全削除
-	db.Find(&articles)
-	fmt.Fprintf(w, "Delete %d records.\n", i-len(articles))
+	result := db.Delete(articles)                               //特に指定しないと全削除
+	fmt.Fprintf(w, "Delete %d records.\n", result.RowsAffected) //返り値もDBで、この場合 RowsAffected に削除したレコード数が入る
 	fmt.Println("Endpoint Hit: deleteArticles")
 }
 

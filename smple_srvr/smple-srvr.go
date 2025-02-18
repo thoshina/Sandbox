@@ -137,16 +137,24 @@ func deleteArticles(w http.ResponseWriter, r *http.Request) {
 
 	var delKey DeleteKey
 
-	if err := json.Unmarshal(body, &delKey); err != nil {
-		fmt.Println(err)
-		return
+	if len > 0 {
+		if err := json.Unmarshal(body, &delKey); err != nil {
+			fmt.Println(err)
+			return
+		}
 	}
-	fmt.Println(delKey.ID)
+	fmt.Printf("ID=%d\n", delKey.ID)
 
 	db := GetDBConn()
 
 	db.Find(&articles)
-	result := db.Delete(articles, delKey.ID)                    //特に指定しないと全削除
+	result := func(db gorm.DB, i uint) (tx *gorm.DB) {
+		if i > 0 {
+			return db.Delete(articles, i)
+		} else {
+			return db.Delete(articles) //特に指定しないと全削除
+		}
+	}(*db, delKey.ID)
 	fmt.Fprintf(w, "Delete %d records.\n", result.RowsAffected) //返り値もDBで、この場合 RowsAffected に削除したレコード数が入る
 	fmt.Println("Endpoint Hit: deleteArticles")
 }

@@ -31,6 +31,10 @@ type Articles []Article
 
 var articles Articles
 
+type DeleteKey struct {
+	ID uint `json:"id,string"`
+}
+
 func homePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome to the HomePage!\n")
 	fmt.Println("Endpoint Hit: homePage")
@@ -124,12 +128,44 @@ func postArticles(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Endpoint Hit: postArticles")
 }
 
+func deleteArticles(w http.ResponseWriter, r *http.Request) {
+	len := r.ContentLength
+	body := make([]byte, len)
+	r.Body.Read(body)
+
+	fmt.Println(body)
+
+	var delKey DeleteKey
+
+	if len > 0 {
+		if err := json.Unmarshal(body, &delKey); err != nil {
+			fmt.Println(err)
+			return
+		}
+	}
+	fmt.Printf("ID=%d\n", delKey.ID)
+
+	db := GetDBConn()
+
+	db.Find(&articles)
+	result := func(db gorm.DB, i uint) (tx *gorm.DB) {
+		if i > 0 {
+			return db.Delete(articles, i)
+		} else {
+			return db.Delete(articles) //特に指定しないと全削除
+		}
+	}(*db, delKey.ID)
+	fmt.Fprintf(w, "Delete %d records.\n", result.RowsAffected) //返り値もDBで、この場合 RowsAffected に削除したレコード数が入る
+	fmt.Println("Endpoint Hit: deleteArticles")
+}
+
 func handleRequests() {
 	http.HandleFunc("/", homePage)
 	http.HandleFunc("/articles", returnArticles)
 	http.HandleFunc("/fetch", fetchArticles)
 	http.HandleFunc("/write", writeArticles)
 	http.HandleFunc("/postart", postArticles)
+	http.HandleFunc("/delete", deleteArticles)
 	log.Fatal(http.ListenAndServe(":8081", nil))
 }
 

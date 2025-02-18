@@ -40,12 +40,19 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Endpoint Hit: homePage")
 }
 
-func returnArticles(w http.ResponseWriter, r *http.Request) {
+func getDemoArticles(c int64) Articles {
 	articles := Articles{}
-	for i := 0; i < 10; i++ {
+	var i int64
+	for i = 0; i < c; i++ {
 		title := "Hello_%d"
 		articles = append(articles, Article{Title: fmt.Sprintf(title, i), Desc: "Article Description", Content: "Article Content"})
 	}
+	return articles
+}
+
+func returnArticles(w http.ResponseWriter, r *http.Request) {
+	articles := getDemoArticles(10)
+
 	fmt.Println("Endpoint Hit: returnArticles")
 	json.NewEncoder(w).Encode(articles)
 }
@@ -112,11 +119,7 @@ func fetchArticles(w http.ResponseWriter, r *http.Request) {
 func writeArticles(w http.ResponseWriter, r *http.Request) {
 	db := GetDBConn()
 
-	articles := Articles{}
-	for i := 0; i < 10; i++ {
-		title := "Hello_%d"
-		articles = append(articles, Article{Title: fmt.Sprintf(title, i), Desc: "Article Description", Content: "Article Content"})
-	}
+	articles := getDemoArticles(10)
 
 	db.Save(articles)
 	fmt.Println(articles)

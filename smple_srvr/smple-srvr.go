@@ -148,13 +148,13 @@ func deleteArticles(w http.ResponseWriter, r *http.Request) {
 	db := GetDBConn()
 
 	db.Find(&articles)
-	result := func(db gorm.DB, i uint) (tx *gorm.DB) {
-		if i > 0 {
+	result := func(db gorm.DB, l int64, i uint) (tx *gorm.DB) {
+		if l > 0 {
 			return db.Delete(articles, i)
 		} else {
-			return db.Delete(articles) //特に指定しないと全削除
+			return db.Delete(articles) //jsonデータ無しなら全削除
 		}
-	}(*db, delKey.ID)
+	}(*db, len, delKey.ID)
 	fmt.Fprintf(w, "Delete %d records.\n", result.RowsAffected) //返り値もDBで、この場合 RowsAffected に削除したレコード数が入る
 	fmt.Println("Endpoint Hit: deleteArticles")
 }

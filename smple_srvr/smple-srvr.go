@@ -31,7 +31,7 @@ type Articles []Article
 
 var articles Articles
 
-type DeleteKey struct {
+type TargetKey struct {
 	ID uint `json:"id,string"`
 }
 
@@ -79,9 +79,30 @@ func GetDBConfigForSQLite(c *gorm.Config) (gorm.Dialector, *gorm.Config) {
 }
 
 func fetchArticles(w http.ResponseWriter, r *http.Request) {
+	len := r.ContentLength
+	body := make([]byte, len)
+	r.Body.Read(body)
+
+	fmt.Println(body)
+
 	db := GetDBConn()
 
-	db.Find(&articles)
+	var shwKey TargetKey
+
+	if len > 0 {
+		if err := json.Unmarshal(body, &shwKey); err != nil {
+			fmt.Println(err)
+			return
+		}
+	}
+	fmt.Printf("ID=%d\n", shwKey.ID)
+
+	if len > 0 {
+		db.Find(&articles, shwKey.ID)
+	} else {
+		db.Find(&articles) //jsonデータ無しならすべて
+	}
+
 	fmt.Println(articles)
 	profJson, _ := json.Marshal(articles)
 	fmt.Fprintln(w, string(profJson))
@@ -135,7 +156,7 @@ func deleteArticles(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println(body)
 
-	var delKey DeleteKey
+	var delKey TargetKey
 
 	if len > 0 {
 		if err := json.Unmarshal(body, &delKey); err != nil {

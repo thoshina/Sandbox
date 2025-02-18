@@ -31,6 +31,10 @@ type Articles []Article
 
 var articles Articles
 
+type DeleteKey struct {
+	ID uint `json:"id,string"`
+}
+
 func homePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome to the HomePage!\n")
 	fmt.Println("Endpoint Hit: homePage")
@@ -125,10 +129,24 @@ func postArticles(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteArticles(w http.ResponseWriter, r *http.Request) {
+	len := r.ContentLength
+	body := make([]byte, len)
+	r.Body.Read(body)
+
+	fmt.Println(body)
+
+	var delKey DeleteKey
+
+	if err := json.Unmarshal(body, &delKey); err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(delKey.ID)
+
 	db := GetDBConn()
 
 	db.Find(&articles)
-	result := db.Delete(articles)                               //特に指定しないと全削除
+	result := db.Delete(articles, delKey.ID)                    //特に指定しないと全削除
 	fmt.Fprintf(w, "Delete %d records.\n", result.RowsAffected) //返り値もDBで、この場合 RowsAffected に削除したレコード数が入る
 	fmt.Println("Endpoint Hit: deleteArticles")
 }

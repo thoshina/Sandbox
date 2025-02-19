@@ -96,7 +96,7 @@ func getTargetKey(r *http.Request) (TargetKey, int64) {
 	if len > 0 {
 		if err := json.Unmarshal(body, &tgtKey); err != nil {
 			fmt.Println(err)
-			return TargetKey{}, 0
+			return TargetKey{}, len
 		}
 	}
 

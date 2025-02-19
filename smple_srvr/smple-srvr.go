@@ -85,24 +85,30 @@ func GetDBConfigForSQLite(c *gorm.Config) (gorm.Dialector, *gorm.Config) {
 	return sqlite.Open("file::memory:?cache=shared"), c
 }
 
-func fetchArticles(w http.ResponseWriter, r *http.Request) {
+func getTargetKey(r *http.Request) (TargetKey, int64) {
 	len := r.ContentLength
 	body := make([]byte, len)
 	r.Body.Read(body)
 
 	fmt.Println(body)
-
-	db := GetDBConn()
-
-	var shwKey TargetKey
+	var tgtKey TargetKey
 
 	if len > 0 {
-		if err := json.Unmarshal(body, &shwKey); err != nil {
+		if err := json.Unmarshal(body, &tgtKey); err != nil {
 			fmt.Println(err)
-			return
+			return TargetKey{}, 0
 		}
 	}
+
+	return tgtKey, len
+}
+
+func fetchArticles(w http.ResponseWriter, r *http.Request) {
+	shwKey, len := getTargetKey(r)
+
 	fmt.Printf("ID=%d\n", shwKey.ID)
+
+	db := GetDBConn()
 
 	if len > 0 {
 		db.Find(&articles, shwKey.ID)
@@ -153,20 +159,7 @@ func postArticles(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteArticles(w http.ResponseWriter, r *http.Request) {
-	len := r.ContentLength
-	body := make([]byte, len)
-	r.Body.Read(body)
-
-	fmt.Println(body)
-
-	var delKey TargetKey
-
-	if len > 0 {
-		if err := json.Unmarshal(body, &delKey); err != nil {
-			fmt.Println(err)
-			return
-		}
-	}
+	delKey, len := getTargetKey(r)
 	fmt.Printf("ID=%d\n", delKey.ID)
 
 	db := GetDBConn()

@@ -40,12 +40,19 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Endpoint Hit: homePage")
 }
 
-func returnArticles(w http.ResponseWriter, r *http.Request) {
+func getDemoArticles(c int64) Articles {
 	articles := Articles{}
-	for i := 0; i < 10; i++ {
+	var i int64
+	for i = 0; i < c; i++ {
 		title := "Hello_%d"
 		articles = append(articles, Article{Title: fmt.Sprintf(title, i), Desc: "Article Description", Content: "Article Content"})
 	}
+	return articles
+}
+
+func returnArticles(w http.ResponseWriter, r *http.Request) {
+	articles := getDemoArticles(10)
+
 	fmt.Println("Endpoint Hit: returnArticles")
 	json.NewEncoder(w).Encode(articles)
 }
@@ -78,24 +85,30 @@ func GetDBConfigForSQLite(c *gorm.Config) (gorm.Dialector, *gorm.Config) {
 	return sqlite.Open("file::memory:?cache=shared"), c
 }
 
-func fetchArticles(w http.ResponseWriter, r *http.Request) {
+func getTargetKey(r *http.Request) (TargetKey, int64) {
 	len := r.ContentLength
 	body := make([]byte, len)
 	r.Body.Read(body)
 
 	fmt.Println(body)
-
-	db := GetDBConn()
-
-	var shwKey TargetKey
+	var tgtKey TargetKey
 
 	if len > 0 {
-		if err := json.Unmarshal(body, &shwKey); err != nil {
+		if err := json.Unmarshal(body, &tgtKey); err != nil {
 			fmt.Println(err)
-			return
+			return TargetKey{}, len
 		}
 	}
+
+	return tgtKey, len
+}
+
+func fetchArticles(w http.ResponseWriter, r *http.Request) {
+	shwKey, len := getTargetKey(r)
+
 	fmt.Printf("ID=%d\n", shwKey.ID)
+
+	db := GetDBConn()
 
 	if len > 0 {
 		db.Find(&articles, shwKey.ID)
@@ -112,11 +125,7 @@ func fetchArticles(w http.ResponseWriter, r *http.Request) {
 func writeArticles(w http.ResponseWriter, r *http.Request) {
 	db := GetDBConn()
 
-	articles := Articles{}
-	for i := 0; i < 10; i++ {
-		title := "Hello_%d"
-		articles = append(articles, Article{Title: fmt.Sprintf(title, i), Desc: "Article Description", Content: "Article Content"})
-	}
+	articles := getDemoArticles(10)
 
 	db.Save(articles)
 	fmt.Println(articles)
@@ -150,20 +159,7 @@ func postArticles(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteArticles(w http.ResponseWriter, r *http.Request) {
-	len := r.ContentLength
-	body := make([]byte, len)
-	r.Body.Read(body)
-
-	fmt.Println(body)
-
-	var delKey TargetKey
-
-	if len > 0 {
-		if err := json.Unmarshal(body, &delKey); err != nil {
-			fmt.Println(err)
-			return
-		}
-	}
+	delKey, len := getTargetKey(r)
 	fmt.Printf("ID=%d\n", delKey.ID)
 
 	db := GetDBConn()

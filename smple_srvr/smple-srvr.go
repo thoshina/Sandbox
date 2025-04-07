@@ -8,8 +8,8 @@ import (
 
 	"time"
 
-	//	"github.com/jinzhu/gorm"
-	//	_ "github.com/jinzhu/gorm/dialects/mysql"
+	//	"github.com/go-sql-driver/mysql"
+	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -58,7 +58,8 @@ func returnArticles(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetDBConn() *gorm.DB {
-	db, err := gorm.Open(GetDBConfigForSQLite(&gorm.Config{}))
+	//db, err := gorm.Open(GetDBConfigForSQLite(&gorm.Config{}))
+	db, err := gorm.Open(GetDBConfigForMySQL(&gorm.Config{}))
 
 	if err != nil {
 		panic(err)
@@ -68,17 +69,18 @@ func GetDBConn() *gorm.DB {
 	return db
 }
 
-func GetDBConfigForMySQL() (string, string) {
-	DBMS := "mysql"
+func GetDBConfigForMySQL(c *gorm.Config) (gorm.Dialector, *gorm.Config) {
+	//	DBMS := "mysql"
 	USER := "root"
 	PASS := ""
-	PROTOCOL := ""
-	DBNAME := "gorm-example"
+	PROTOCOL := "tcp(0.0.0.0:3306)"
+	DBNAME := "smplSvr_example"
+	//Databaseは作成しておく必要あり Tableは未作成でも大丈夫
 	QPTION := "charset=utf8&parseTime=True&loc=Local"
 
 	CONNECT := USER + ":" + PASS + "@" + PROTOCOL + "/" + DBNAME + "?" + QPTION
 
-	return DBMS, CONNECT
+	return mysql.Open(CONNECT), c
 }
 
 func GetDBConfigForSQLite(c *gorm.Config) (gorm.Dialector, *gorm.Config) {
